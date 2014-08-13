@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentManager;
 import com.facebook.FacebookException;
 import com.facebook.widget.FriendPickerFragment;
 import com.facebook.widget.PickerFragment;
+import com.jajmu.pushupgame.PushUpApplication;
 import com.jajmu.pushupgame.R;
 
 public class PickerActivity extends FragmentActivity {
@@ -31,6 +32,8 @@ public class PickerActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.pickers);
 
+        //if we want multiple people playing at once set to true
+        getIntent().putExtra(FriendPickerFragment.MULTI_SELECT_BUNDLE_KEY, false);
         Bundle args = getIntent().getExtras();
         FragmentManager manager = getSupportFragmentManager();
         Fragment fragmentToShow = null;
@@ -94,6 +97,13 @@ public class PickerActivity extends FragmentActivity {
     }
 
     private void finishActivity() {
+        setResult(RESULT_OK, null);
+        PushUpApplication app = (PushUpApplication) getApplication();
+        if (FRIEND_PICKER.equals(getIntent().getData())) {
+            if (friendPickerFragment != null) {
+                app.getGameStateManager().setSelectedUsers(friendPickerFragment.getSelection());
+            }
+        }
         setResult(RESULT_OK, null);
         finish();
     }

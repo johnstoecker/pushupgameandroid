@@ -24,6 +24,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.facebook.Request;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.model.GraphUser;
@@ -66,6 +67,7 @@ public class Main extends Activity
 
     private void setUpFacebook(){
         // start Facebook Login
+
         Session.StatusCallback facebookCallback = new Session.StatusCallback() {
 
             // callback when session changes state
@@ -74,7 +76,6 @@ public class Main extends Activity
                 System.out.println("calling");
                 if (session.isOpened()) {
                     System.out.println("opening");
-
                     // make request to the /me API
                     com.facebook.Request.newMeRequest(session, new com.facebook.Request.GraphUserCallback() {
 
@@ -87,6 +88,7 @@ public class Main extends Activity
 //
 //		            	  TextView welcome = ((TextView) findViewById(R.id.cardResult));
 //		                welcome.setText("Hello " + user.getName() + "!");
+                                ((PushUpApplication)getApplication()).getGameStateManager().setCurrentUser(user);
                                 System.out.println(user.getName());
                             }
                         }
@@ -102,6 +104,10 @@ public class Main extends Activity
         if(position == 1 ){
             Intent intent = new Intent(this, GameActivity.class);
             startActivity(intent);
+        }
+        if(position == 2 ){
+            Session session = Session.getActiveSession();
+            session.closeAndClearTokenInformation();
         }
 //        // update the main content by replacing fragments
 //        FragmentManager fragmentManager = getFragmentManager();

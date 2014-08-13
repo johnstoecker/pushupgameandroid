@@ -1,11 +1,13 @@
 package com.jajmu.pushupgame.gameview;
 
 import android.app.Activity;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,21 +17,17 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.facebook.Session;
+import com.facebook.model.GraphUser;
+import com.jajmu.pushupgame.PushUpApplication;
 import com.jajmu.pushupgame.R;
 import com.jajmu.pushupgame.facebook.FriendListElement;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FriendListFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FriendListFragment#newInstance} factory method to
- * create an instance of this fragment.
- *
- */
 public class FriendListFragment extends Fragment {
     private ListView listView;
     private List<FriendListElement> listElements;
@@ -96,13 +94,6 @@ public class FriendListFragment extends Fragment {
         return v;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -120,16 +111,6 @@ public class FriendListFragment extends Fragment {
         mListener = null;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         public void onFragmentInteraction(Uri uri);
@@ -181,6 +162,46 @@ public class FriendListFragment extends Fragment {
     }
 
     private class PeopleListElement extends FriendListElement {
+        private List<GraphUser> selectedUsers;
+        private static final String FRIENDS_KEY = "friends";
+
+        private byte[] getByteArray(List<GraphUser> users) {
+            // convert the list of GraphUsers to a list of String
+            // where each element is the JSON representation of the
+            // GraphUser so it can be stored in a Bundle
+            List<String> usersAsString = new ArrayList<String>(users.size());
+
+            for (GraphUser user : users) {
+                usersAsString.add(user.getInnerJSONObject().toString());
+            }
+            try {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                new ObjectOutputStream(outputStream).writeObject(usersAsString);
+                return outputStream.toByteArray();
+            } catch (IOException e) {
+                Log.e("FB", "Unable to serialize users.", e);
+            }
+            return null;
+        }
+
+        @Override
+        protected void onSaveInstanceState(Bundle bundle) {
+            if (selectedUsers != null) {
+                bundle.putByteArray(FRIENDS_KEY,
+                        getByteArray(selectedUsers));
+            }
+        }
+
+        @Override
+        public void onActivityResult(Intent data) {
+            System.out.println("list element result");
+            super.onActivityResult(data);
+            selectedUsers = ((PushUpApplication) getActivity()
+                    .getApplication()).getGameStateManager()
+                    .getSelectedUsers();
+            setUsersText();
+            notifyDataChanged();
+        }
 
         public PeopleListElement(int requestCode) {
             super(getActivity().getResources().getDrawable(R.drawable.ic_launcher),
@@ -197,6 +218,41 @@ public class FriendListFragment extends Fragment {
                 }
             };
         }
+        private void setUsersText() {
+            System.out.println("setting users text");
+            String text = null;
+            if (selectedUsers != null) {
+                // If there is one friend
+                if (selectedUsers.size() == 1) {
+                    text = String.format(getResources()
+                                    .getString(R.string.single_user_selected),
+                            selectedUsers.get(0).getName());
+                } else if (selectedUsers.size() == 2) {
+                    // If there are two friends
+                    text = String.format(getResources()
+                                    .getString(R.string.two_users_selected),
+                            selectedUsers.get(0).getName(),
+                            selectedUsers.get(1).getName());
+                } else if (selectedUsers.size() > 2) {
+                    // If there are more than two friends
+                    text = String.format(getResources()
+                                    .getString(R.string.multiple_users_selected),
+                            selectedUsers.get(0).getName(),
+                            (selectedUsers.size() - 1));
+                }
+            }
+            if (text == null) {
+                // If no text, use the placeholder text
+                text = getResources()
+                        .getString(R.string.action_people_default);
+            }
+            // Set the text in list element. This will notify the
+            // adapter that the data has changed to
+            // refresh the list view.
+//        setText2(text);
+        }
+
+
     }
     private void startPickerActivity(Uri data, int requestCode) {
         Intent intent = new Intent();
@@ -204,4 +260,15 @@ public class FriendListFragment extends Fragment {
         intent.setClass(getActivity(), PickerActivity.class);
         startActivityForResult(intent, requestCode);
     }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        mListener.onFragmentInteraction(null);
+        super.onActivityResult(requestCode, resultCode, data);
+        System.out.println(requestCode);
+        System.out.println("inside friend list fragment");
+        System.out.println(data);
+    }
+
+
 }

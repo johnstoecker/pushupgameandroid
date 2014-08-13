@@ -8,6 +8,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.facebook.widget.LoginButton;
+
+import java.util.Arrays;
 
 
 /**
@@ -66,6 +69,8 @@ public class SplashFragment extends Fragment {
                              ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_splash,
                 container, false);
+        LoginButton authButton = (LoginButton) view.findViewById(R.id.login_button);
+        authButton.setReadPermissions(Arrays.asList("public_profile", "user_friends"));
         return view;
     }
 

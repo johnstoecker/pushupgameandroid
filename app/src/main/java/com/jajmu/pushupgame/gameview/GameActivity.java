@@ -2,7 +2,7 @@ package com.jajmu.pushupgame.gameview;
 
 import android.app.Activity;
 import android.app.ActionBar;
-import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,9 +19,10 @@ import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
 import com.facebook.model.GraphUser;
+import com.jajmu.pushupgame.PushUpApplication;
 import com.jajmu.pushupgame.R;
 
-public class GameActivity extends Activity implements FriendListFragment.OnFragmentInteractionListener{
+public class GameActivity extends Activity implements FriendListFragment.OnFragmentInteractionListener, VersusFragment.OnFragmentInteractionListener{
     private static final int REAUTH_ACTIVITY_CODE = 100;
 
     @Override
@@ -30,6 +31,24 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
         setContentView(R.layout.activity_game);
         uiHelper = new UiLifecycleHelper(this, callback);
         uiHelper.onCreate(savedInstanceState);
+        // Check that the activity is using the layout version with
+        // the fragment_container FrameLayout
+        if (findViewById(R.id.gameContainer) != null) {
+
+            // However, if we're being restored from a previous state,
+            // then we don't need to do anything and should return or else
+            // we could end up with overlapping fragments.
+            if (savedInstanceState != null) {
+                return;
+            }
+
+            // Create a new Fragment to be placed in the activity layout
+            FriendListFragment firstFragment = new FriendListFragment();
+
+            // Add the fragment to the 'fragment_container' FrameLayout
+            getFragmentManager().beginTransaction()
+                    .add(R.id.gameContainer, firstFragment).commit();
+        }
     }
 
 //    @Override
@@ -62,8 +81,19 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
 
     @Override
     public void onFragmentInteraction(Uri uri) {
+        System.out.println(uri);
+        if(((PushUpApplication)getApplication()).getGameStateManager().getSelectedUsers().size() > 0){
+            VersusFragment vFrag = new VersusFragment();
 
-    }
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+            transaction.replace(R.id.gameContainer, vFrag);
+            transaction.addToBackStack(null);
+
+            transaction.commit();
+        }
+     }
+
     private UiLifecycleHelper uiHelper;
     private Session.StatusCallback callback = new Session.StatusCallback() {
         @Override
@@ -89,7 +119,7 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
                             if (user != null) {
                                 // Set the id for the ProfilePictureView
                                 // view that in turn displays the profile picture.
-//                                profilePictureView.setProfileId(user.getId());
+//                                player1ProfilePicture.setProfileId(user.getId());
                                 System.out.println(user.getLocation());
                                 // Set the Textview's text to the user's name.
 //                                userNameView.setText(user.getName());
@@ -108,7 +138,10 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
         if (requestCode == REAUTH_ACTIVITY_CODE) {
             uiHelper.onActivityResult(requestCode, resultCode, data);
         } else if (resultCode == Activity.RESULT_OK) {
-            // Do nothing for now
+            System.out.println("inside game activity");
+            System.out.println(requestCode);
+            System.out.println(resultCode);
+            System.out.println(data);
         }
     }
 

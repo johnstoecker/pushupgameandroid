@@ -1,4 +1,4 @@
-package com.jajmu.pushupgame;
+package com.jajmu.pushupgame.gameview;
 
 import android.app.Activity;
 import android.net.Uri;
@@ -7,20 +7,25 @@ import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
-
+import com.facebook.widget.ProfilePictureView;
+import com.jajmu.pushupgame.PushUpApplication;
+import com.jajmu.pushupgame.R;
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link SelectionFragment.OnFragmentInteractionListener} interface
+ * {@link VersusFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link SelectionFragment#newInstance} factory method to
+ * Use the {@link VersusFragment#newInstance} factory method to
  * create an instance of this fragment.
  *
  */
-public class SelectionFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
+public class VersusFragment extends Fragment {
+    private ProfilePictureView player1ProfilePicture;
+    private ProfilePictureView player2ProfilePicture;
+        // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -30,25 +35,25 @@ public class SelectionFragment extends Fragment {
     private String mParam2;
 
     private OnFragmentInteractionListener mListener;
-    private static final String TAG = "SelectionFragment";
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment SelectionFragment.
+     * @return A new instance of fragment VersusFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static SelectionFragment newInstance(String param1, String param2) {
-        SelectionFragment fragment = new SelectionFragment();
+    public static VersusFragment newInstance(String param1, String param2) {
+        VersusFragment fragment = new VersusFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
-    public SelectionFragment() {
+    public VersusFragment() {
         // Required empty public constructor
     }
 
@@ -61,12 +66,33 @@ public class SelectionFragment extends Fragment {
         }
     }
 
+    public void setPlayer1ProfilePicture(String id){
+        player1ProfilePicture.setProfileId(id);
+    }
+
+    public void setPlayer2ProfilePicture(String id){
+        player2ProfilePicture.setProfileId(id);
+    }
+
+
     @Override
-    public View onCreateView(LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-        super.onCreateView(inflater, container, savedInstanceState);
-        View view = inflater.inflate(R.layout.fragment_selection,
-                container, false);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_versus, container, false);
+
+        // Find the user's profile picture custom view
+        player1ProfilePicture = (ProfilePictureView) view.findViewById(R.id.player1_profile_pic);
+        player1ProfilePicture.setCropped(true);
+        player1ProfilePicture.setProfileId(((PushUpApplication)getActivity().getApplication()).getGameStateManager().getPlayer1UserId());
+
+        player2ProfilePicture = (ProfilePictureView) view.findViewById(R.id.player2_profile_pic);
+        player2ProfilePicture.setCropped(true);
+        player2ProfilePicture.setProfileId(((PushUpApplication)getActivity().getApplication()).getGameStateManager().getPlayer2UserId());
+
+        ((TextView)view.findViewById(R.id.player1_name)).setText(((PushUpApplication)getActivity().getApplication()).getGameStateManager().getPlayer1LongName());
+        ((TextView)view.findViewById(R.id.player2_name)).setText(((PushUpApplication)getActivity().getApplication()).getGameStateManager().getPlayer2LongName());
+        // Find the user's name view
         return view;
     }
 

@@ -24,6 +24,11 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public class PushUpApplication extends Application {
     private NetClient netClient;
+
+    public GameStateManager getGameStateManager() {
+        return gameStateManager;
+    }
+
     private GameStateManager gameStateManager;
     private RequestQueue requestQueue;
     private GoogleCloudMessaging gcm;
