@@ -3,8 +3,10 @@ package com.jajmu.pushupgame;
 import android.app.Activity;
 
 import android.app.ActionBar;
+import android.app.AlarmManager;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -24,6 +26,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.facebook.AccessToken;
 import com.facebook.Request;
 import com.facebook.Session;
 import com.facebook.SessionState;
@@ -37,6 +40,7 @@ import java.security.NoSuchAlgorithmException;
 public class Main extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
     public NetClient NC;
+    private AccessToken token;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -62,41 +66,7 @@ public class Main extends Activity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
-        setUpFacebook();
-    }
-
-    private void setUpFacebook(){
-        // start Facebook Login
-
-        Session.StatusCallback facebookCallback = new Session.StatusCallback() {
-
-            // callback when session changes state
-            @Override
-            public void call(com.facebook.Session session, SessionState state, Exception exception) {
-                System.out.println("calling");
-                if (session.isOpened()) {
-                    System.out.println("opening");
-                    // make request to the /me API
-                    com.facebook.Request.newMeRequest(session, new com.facebook.Request.GraphUserCallback() {
-
-                        // callback after Graph API response with user object
-                        @Override
-                        public void onCompleted(GraphUser user, com.facebook.Response response) {
-                            if (user != null) {
-//		            	  TextView txtView = (TextView) ((Activity)context).findViewById(R.id.cardResult);
-//		                  txtView.setText("Hello");
-//
-//		            	  TextView welcome = ((TextView) findViewById(R.id.cardResult));
-//		                welcome.setText("Hello " + user.getName() + "!");
-                                ((PushUpApplication)getApplication()).getGameStateManager().setCurrentUser(user);
-                                System.out.println(user.getName());
-                            }
-                        }
-                    }).executeAsync();
-                }
-            }
-        };
-        com.facebook.Session.openActiveSession(this, true, facebookCallback);
+//        getCurrentUser();
     }
 
     @Override
@@ -108,6 +78,11 @@ public class Main extends Activity
         if(position == 2 ){
             Session session = Session.getActiveSession();
             session.closeAndClearTokenInformation();
+            Intent i = getBaseContext().getPackageManager()
+                    .getLaunchIntentForPackage( getBaseContext().getPackageName() );
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(i);
+
         }
 //        // update the main content by replacing fragments
 //        FragmentManager fragmentManager = getFragmentManager();

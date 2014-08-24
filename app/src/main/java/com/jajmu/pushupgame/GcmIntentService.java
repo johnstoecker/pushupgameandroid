@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.jajmu.pushupgame.gameview.GameActivity;
+import com.jajmu.pushupgame.gameview.VersusFragment;
 
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
@@ -42,6 +44,10 @@ public class GcmIntentService extends IntentService {
             } else if (GoogleCloudMessaging.
                     MESSAGE_TYPE_MESSAGE.equals(messageType)) {
                 System.out.println(extras.toString());
+                //Game Logic
+                //if we are on the correct page with correct opponent, update UI
+                //otherwise send notification
+                //
                 sendNotification(extras);
 //    			int duration = Toast.LENGTH_SHORT;
 //				Toast toast = Toast.makeText(getApplicationContext(), extras.toString(), duration);
@@ -51,16 +57,19 @@ public class GcmIntentService extends IntentService {
         // Release the wake lock provided by the WakefulBroadcastReceiver.
         GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
+
     // Put the message into a notification and post it.
     // This is just one simple example of what you might choose to do with
     // a GCM message.
     private void sendNotification(Bundle b) {
-        mNotificationManager = (NotificationManager)
-                this.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        //if opponent done and game status is waiting for opponent, start your turn
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, DrawActivity.class), 0);
+        //TODO: check if logged in -- if not, show splash screen and add challenge to games
+        Intent notificationIntent = new Intent(getApplicationContext(), GameActivity.class);
+
+        //find the class to show based on the game state
+        notificationIntent.putExtras(b);
+
+        PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
@@ -71,6 +80,9 @@ public class GcmIntentService extends IntentService {
                         .setContentText(b.get("message").toString());
 
         mBuilder.setContentIntent(contentIntent);
+        mBuilder.setAutoCancel(true);
+        mNotificationManager = (NotificationManager)
+                this.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
     }
 }

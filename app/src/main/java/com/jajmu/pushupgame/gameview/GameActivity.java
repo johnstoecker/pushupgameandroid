@@ -1,17 +1,13 @@
 package com.jajmu.pushupgame.gameview;
 
 import android.app.Activity;
-import android.app.ActionBar;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.os.Build;
 
 import com.facebook.Request;
 import com.facebook.Response;
@@ -19,11 +15,16 @@ import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
 import com.facebook.model.GraphUser;
+import com.jajmu.pushupgame.GameStateManager;
 import com.jajmu.pushupgame.PushUpApplication;
 import com.jajmu.pushupgame.R;
 
+import java.util.List;
+
 public class GameActivity extends Activity implements FriendListFragment.OnFragmentInteractionListener, VersusFragment.OnFragmentInteractionListener{
     private static final int REAUTH_ACTIVITY_CODE = 100;
+    private static final String GAME_PREFERENCES_FILE = "GameStateManager";
+    private GameStateManager gameStateManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,23 +32,43 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
         setContentView(R.layout.activity_game);
         uiHelper = new UiLifecycleHelper(this, callback);
         uiHelper.onCreate(savedInstanceState);
+        setGameStateManager(new GameStateManager(getSharedPreferences(GAME_PREFERENCES_FILE, Context.MODE_PRIVATE)));
         // Check that the activity is using the layout version with
         // the fragment_container FrameLayout
         if (findViewById(R.id.gameContainer) != null) {
-
+            GameStateManager.GameState gameState = getGameStateManager().getCurrentState();
             // However, if we're being restored from a previous state,
             // then we don't need to do anything and should return or else
             // we could end up with overlapping fragments.
             if (savedInstanceState != null) {
                 return;
-            }
 
+//                String type = savedInstanceState.get("type").toString();
+//                String challengerId = savedInstanceState.get("challenger_id").toString();
+//                if(type.equals("challenge")){
+//                    getGameStateManager().setCurrentState(GameStateManager.GameState.BEING_CHALLENGED);
+////                    notificationIntent.putExtra("param1", getCurrentUser().getId());
+////                    notificationIntent.putExtra("param2", challengerId);
+//                } else if(type.equals("finishTurn")){
+//                    getGameStateManager().setCurrentState(GameStateManager.GameState.YOUR_TURN);
+//                } else{
+//                    getGameStateManager().setCurrentState(GameStateManager.GameState.START);
+//                }
+            }
             // Create a new Fragment to be placed in the activity layout
             FriendListFragment firstFragment = new FriendListFragment();
-
             // Add the fragment to the 'fragment_container' FrameLayout
             getFragmentManager().beginTransaction()
                     .add(R.id.gameContainer, firstFragment).commit();
+            if(gameState == GameStateManager.GameState.START) {
+            } else if(gameState == GameStateManager.GameState.BEING_CHALLENGED || gameState == GameStateManager.GameState.CHALLENGING_OPPONENT){
+                VersusFragment vFrag = new VersusFragment();
+                FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                transaction.replace(R.id.gameContainer, vFrag);
+                transaction.addToBackStack(null);
+                transaction.commit();
+            } else if(gameState == GameStateManager.GameState.BEING_CHALLENGED || gameState == GameStateManager.GameState.YOUR_TURN){
+            }
         }
     }
 
@@ -82,7 +103,7 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
     @Override
     public void onFragmentInteraction(Uri uri) {
         System.out.println(uri);
-        if(((PushUpApplication)getApplication()).getGameStateManager().getSelectedUsers().size() > 0){
+        if(getGameStateManager().getOpponents().size() > 0){
             VersusFragment vFrag = new VersusFragment();
 
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
@@ -93,6 +114,20 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
             transaction.commit();
         }
      }
+
+    public void onFriendSelect(List<GraphUser> opponents){
+        getGameStateManager().setOpponents(opponents);
+        if(opponents.size() > 0){
+            VersusFragment vFrag = new VersusFragment();
+
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+            transaction.replace(R.id.gameContainer, vFrag);
+            transaction.addToBackStack(null);
+
+            transaction.commit();
+        }
+    }
 
     private UiLifecycleHelper uiHelper;
     private Session.StatusCallback callback = new Session.StatusCallback() {
@@ -167,5 +202,13 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
     public void onDestroy() {
         super.onDestroy();
         uiHelper.onDestroy();
+    }
+
+    public GameStateManager getGameStateManager() {
+        return gameStateManager;
+    }
+
+    public void setGameStateManager(GameStateManager gameStateManager) {
+        this.gameStateManager = gameStateManager;
     }
 }

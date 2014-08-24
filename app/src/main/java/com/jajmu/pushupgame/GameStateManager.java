@@ -1,34 +1,43 @@
 package com.jajmu.pushupgame;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+
+import com.facebook.model.GraphObject;
 import com.facebook.model.GraphUser;
+import com.jajmu.pushupgame.gameview.GameActivity;
 
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class GameStateManager {
-    private enum GameState {
-        START, FIND_OPPONENT, CHALLENGE_OPPONENT, YOUR_TURN, OPPONENT_TURN, LOSE, WIN
+    public enum GameState {
+        START, FIND_OPPONENT, CHALLENGING_OPPONENT, BEING_CHALLENGED, YOUR_TURN, OPPONENT_TURN, LOSE, WIN
     };
-    private List<GraphUser> selectedUsers;
-
-    public GraphUser getCurrentUser() {
-        return currentUser;
-    }
-
-    public void setCurrentUser(GraphUser currentUser) {
-        this.currentUser = currentUser;
-    }
-
-    private GraphUser currentUser;
-
+    private SharedPreferences prefs;
+    private List<GraphUser> opponents;
     private GameState currentState;
-
     private Deque<Turn> turns;
+    public Deck deck;
 
-    public GameStateManager(){
-        currentState = GameState.START;
+    public GameStateManager(SharedPreferences p){
+        setCurrentState(GameState.START);
         turns = new LinkedList<Turn>();
+        deck = new Deck();
+    }
+
+    public GameState getCurrentState() {
+        return currentState;
+    }
+
+    public void setCurrentState(GameState currentState) {
+        this.currentState = currentState;
     }
 
     private String getUserId(GraphUser u){
@@ -57,46 +66,56 @@ public class GameStateManager {
         return null;
     }
 
-    public String getPlayer1UserId(){
-        return getUserId(currentUser);
-    }
-
-    public String getPlayer1LongName(){
-        return getUserLongName(currentUser);
-    }
-
-    public String getPlayer1Name(){
-        return getUserName(currentUser);
-    }
-
     public String getPlayer2UserId(){
-        if(selectedUsers.size()>0){
-            return getUserId(selectedUsers.get(0));
+        if(opponents!=null && opponents.size()>0){
+            return getUserId(opponents.get(0));
         }
         return null;
     }
 
     public String getPlayer2LongName(){
-        if(selectedUsers.size()>0){
-            return getUserLongName(selectedUsers.get(0));
+        if(opponents!=null && opponents.size()>0){
+            return getUserLongName(opponents.get(0));
         }
         return null;
     }
 
     public String getPlayer2Name(){
-        if(selectedUsers.size()>0){
-            return getUserName(selectedUsers.get(0));
+        if(opponents!=null && opponents.size()>0){
+            return getUserName(opponents.get(0));
         }
         return null;
     }
 
+    /**
+     * Gets the activity to start based on what message we received from GCM
+     * @param
+     * @return
+     */
+    public Intent gameStateMessageHandler(Bundle b, Context c){
+        String type = b.get("type").toString();
+        String challengerId = b.get("challenger_id").toString();
+        Intent notificationIntent = new Intent(c, GameActivity.class);
+        if(type.equals("challenge")){
+            setCurrentState(GameState.BEING_CHALLENGED);
+//            notificationIntent.putExtra("param1", getCurrentUser().getId());
+            notificationIntent.putExtra("param2", challengerId);
+        } else if(type.equals("finishTurn")){
+            setCurrentState(GameState.YOUR_TURN);
+        } else{
+            setCurrentState(GameState.START);
+        }
 
-    public List<GraphUser> getSelectedUsers() {
-        return selectedUsers;
+        return notificationIntent;
     }
 
-    public void setSelectedUsers(List<GraphUser> users) {
-        selectedUsers = users;
+
+    public List<GraphUser> getOpponents() {
+        return opponents;
+    }
+
+    public void setOpponents(List<GraphUser> users) {
+        opponents = users;
     }
 
     public void setCurrentState(int state){
@@ -105,7 +124,7 @@ public class GameStateManager {
 
     public void finishedTurn(Turn turn){
         //if we get a 'finishedTurn' signal out of order, just ignore! duplicate network message shenanigans.
-        if((currentState == GameState.YOUR_TURN && !turn.isYours) || (currentState == GameState.OPPONENT_TURN && turn.isYours)){
+        if((getCurrentState() == GameState.YOUR_TURN && !turn.isYours) || (getCurrentState() == GameState.OPPONENT_TURN && turn.isYours)){
             return;
         }
         //if not first turn and previous turn didn't complete, win!
@@ -119,18 +138,18 @@ public class GameStateManager {
         else{
             turns.add(turn);
             if(turn.isYours){
-                currentState = GameState.OPPONENT_TURN;
+                setCurrentState(GameState.OPPONENT_TURN);
             }else{
-                currentState = GameState.YOUR_TURN;
+                setCurrentState(GameState.YOUR_TURN);
             }
         }
     }
 
     public void win(){
-        currentState = GameState.WIN;
+        setCurrentState(GameState.WIN);
     }
 
     public void lose(){
-        currentState = GameState.LOSE;
+        setCurrentState(GameState.LOSE);
     }
 }

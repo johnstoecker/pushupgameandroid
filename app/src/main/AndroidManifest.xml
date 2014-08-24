@@ -11,7 +11,7 @@
         android:name="com.example.gcm.permission.C2D_MESSAGE"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.example.gcm.permission.C2D_MESSAGE" />
+    <uses-permission android:name="com.jajmu.gcm.permission.C2D_MESSAGE" />
 
     <application
         android:name=".PushUpApplication"
@@ -49,10 +49,15 @@
             android:label="@string/title_facebook_login" >
         </activity>
 
-        <service
-            android:name=".GcmIntentService"
-            android:exported="false" >
-        </service>
+        <receiver
+            android:name=".GcmBroadcastReceiver"
+            android:permission="com.google.android.c2dm.permission.SEND" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <category android:name="com.jajmu.gcm" />
+            </intent-filter>
+        </receiver>
+        <service android:name=".GcmIntentService" />
 
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"

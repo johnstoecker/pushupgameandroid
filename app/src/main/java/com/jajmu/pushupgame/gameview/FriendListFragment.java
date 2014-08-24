@@ -17,10 +17,14 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.facebook.Session;
+import com.facebook.model.GraphObject;
 import com.facebook.model.GraphUser;
 import com.jajmu.pushupgame.PushUpApplication;
 import com.jajmu.pushupgame.R;
 import com.jajmu.pushupgame.facebook.FriendListElement;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -113,7 +117,7 @@ public class FriendListFragment extends Fragment {
 
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        public void onFragmentInteraction(Uri uri);
+        public void onFriendSelect(List<GraphUser> opponents);
     }
 
     private class ActionListAdapter extends ArrayAdapter<FriendListElement> {
@@ -194,11 +198,20 @@ public class FriendListFragment extends Fragment {
 
         @Override
         public void onActivityResult(Intent data) {
-            System.out.println("list element result");
+            List<String> tmpList = data.getStringArrayListExtra("opponents");
+            List<GraphUser> list = new ArrayList<GraphUser>();
+            for (String tmpString : tmpList) {
+                try {
+                    GraphUser user = GraphObject.Factory.create(new JSONObject(tmpString), GraphUser.class);
+                    list.add(user);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            selectedUsers = list;
+            ((GameActivity)getActivity()).getGameStateManager()
+                    .setOpponents(list);
             super.onActivityResult(data);
-            selectedUsers = ((PushUpApplication) getActivity()
-                    .getApplication()).getGameStateManager()
-                    .getSelectedUsers();
             setUsersText();
             notifyDataChanged();
         }
@@ -263,7 +276,17 @@ public class FriendListFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        mListener.onFragmentInteraction(null);
+        List<String> tmpList = data.getStringArrayListExtra("opponents");
+        List<GraphUser> list = new ArrayList<GraphUser>();
+        for (String tmpString : tmpList) {
+            try {
+                GraphUser user = GraphObject.Factory.create(new JSONObject(tmpString), GraphUser.class);
+                list.add(user);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        mListener.onFriendSelect(list);
         super.onActivityResult(requestCode, resultCode, data);
         System.out.println(requestCode);
         System.out.println("inside friend list fragment");

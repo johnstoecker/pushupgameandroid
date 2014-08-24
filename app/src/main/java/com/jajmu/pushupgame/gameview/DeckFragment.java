@@ -9,23 +9,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.facebook.widget.ProfilePictureView;
+import com.jajmu.pushupgame.Card;
 import com.jajmu.pushupgame.PushUpApplication;
 import com.jajmu.pushupgame.R;
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link VersusFragment.OnFragmentInteractionListener} interface
+ * {@link DeckFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link VersusFragment#newInstance} factory method to
+ * Use the {@link DeckFragment#newInstance} factory method to
  * create an instance of this fragment.
  *
  */
-public class VersusFragment extends Fragment {
-    private ProfilePictureView player1ProfilePicture;
-    private ProfilePictureView player2ProfilePicture;
-        // TODO: Rename parameter arguments, choose names that match
+public class DeckFragment extends Fragment {
+    // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -42,18 +40,18 @@ public class VersusFragment extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment VersusFragment.
+     * @return A new instance of fragment DeckFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static VersusFragment newInstance(String param1, String param2) {
-        VersusFragment fragment = new VersusFragment();
+    public static DeckFragment newInstance(String param1, String param2) {
+        DeckFragment fragment = new DeckFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
-    public VersusFragment() {
+    public DeckFragment() {
         // Required empty public constructor
     }
 
@@ -66,34 +64,11 @@ public class VersusFragment extends Fragment {
         }
     }
 
-    public void setPlayer1ProfilePicture(String id){
-        player1ProfilePicture.setProfileId(id);
-    }
-
-    public void setPlayer2ProfilePicture(String id){
-        player2ProfilePicture.setProfileId(id);
-    }
-
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_versus, container, false);
-
-        // Find the user's profile picture custom view
-        player1ProfilePicture = (ProfilePictureView) view.findViewById(R.id.player1_profile_pic);
-        player1ProfilePicture.setCropped(true);
-        player1ProfilePicture.setProfileId(((PushUpApplication)getActivity().getApplication()).getCurrentUser().getId());
-
-        player2ProfilePicture = (ProfilePictureView) view.findViewById(R.id.player2_profile_pic);
-        player2ProfilePicture.setCropped(true);
-        player2ProfilePicture.setProfileId(((GameActivity)getActivity()).getGameStateManager().getPlayer2UserId());
-
-        ((TextView)view.findViewById(R.id.player1_name)).setText(((PushUpApplication)getActivity().getApplication()).getCurrentUser().getName());
-        ((TextView)view.findViewById(R.id.player2_name)).setText(((GameActivity)getActivity()).getGameStateManager().getPlayer2LongName());
-        // Find the user's name view
-        return view;
+        return inflater.inflate(R.layout.fragment_deck, container, false);
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -134,5 +109,14 @@ public class VersusFragment extends Fragment {
         // TODO: Update argument type and name
         public void onFragmentInteraction(Uri uri);
     }
+
+    public void drawCard(View v){
+        Card card = ((GameActivity)getActivity()).getGameStateManager().deck.drawCard();
+        System.out.println(card.getName());
+//        TextView view = (TextView) findViewById(R.id.cardResult);
+//        view.setText(card.getName());
+    }
+
+
 
 }

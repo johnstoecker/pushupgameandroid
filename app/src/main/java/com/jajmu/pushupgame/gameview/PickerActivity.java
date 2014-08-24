@@ -2,6 +2,7 @@ package com.jajmu.pushupgame.gameview;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -9,10 +10,14 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 
 import com.facebook.FacebookException;
+import com.facebook.model.GraphUser;
 import com.facebook.widget.FriendPickerFragment;
 import com.facebook.widget.PickerFragment;
 import com.jajmu.pushupgame.PushUpApplication;
 import com.jajmu.pushupgame.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PickerActivity extends FragmentActivity {
     public static final Uri FRIEND_PICKER = Uri.parse("picker://friend");
@@ -98,13 +103,20 @@ public class PickerActivity extends FragmentActivity {
 
     private void finishActivity() {
         setResult(RESULT_OK, null);
-        PushUpApplication app = (PushUpApplication) getApplication();
-        if (FRIEND_PICKER.equals(getIntent().getData())) {
-            if (friendPickerFragment != null) {
-                app.getGameStateManager().setSelectedUsers(friendPickerFragment.getSelection());
-            }
+//        PushUpApplication app = (PushUpApplication) getApplication();
+//        if (FRIEND_PICKER.equals(getIntent().getData())) {
+//            if (friendPickerFragment != null) {
+//                ((GameActivity)getActivity()).getGameStateManager().setOpponents(friendPickerFragment.getSelection());
+//            }
+//        }
+        ArrayList<String> tmpList = new ArrayList<String>();
+        for (GraphUser tmp : friendPickerFragment.getSelection()) {
+            tmpList.add(tmp.getInnerJSONObject().toString());
         }
-        setResult(RESULT_OK, null);
+        Intent intent = new Intent();
+        intent.putExtra("opponents", tmpList);
+        intent.putStringArrayListExtra("opponents", tmpList);
+        setResult(RESULT_OK, intent);
         finish();
     }
     @Override

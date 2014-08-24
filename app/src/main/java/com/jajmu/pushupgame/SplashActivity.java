@@ -3,6 +3,7 @@ package com.jajmu.pushupgame;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
+import com.facebook.model.GraphUser;
 import com.jajmu.pushupgame.util.SystemUiHider;
 
 import android.annotation.TargetApi;
@@ -80,7 +81,7 @@ public class SplashActivity extends Activity implements SplashFragment.OnFragmen
 
         if (session != null && session.isOpened()) {
             // if the session is already open,
-            // try to show the selection fragment
+            // try to show the selection fragment0
             System.out.println("show main");
             showMain(false);
         } else {
@@ -119,6 +120,40 @@ public class SplashActivity extends Activity implements SplashFragment.OnFragmen
                 System.out.println("show splash 2");
                 showSplash(false);
             }
+        }
+        if(state.isOpened()){
+            Session.StatusCallback facebookCallback = new Session.StatusCallback() {
+
+                // callback when session changes state
+                @Override
+                public void call(com.facebook.Session session, SessionState state, Exception exception) {
+                    System.out.println("calling");
+                    if (session.isOpened()) {
+                        System.out.println("opening");
+                        // make request to the /me API
+                        com.facebook.Request.newMeRequest(session, new com.facebook.Request.GraphUserCallback() {
+
+                            //TODO: facebook errors
+
+                            // callback after Graph API response with user object
+                            @Override
+                            public void onCompleted(GraphUser user, com.facebook.Response response) {
+                                if (user != null) {
+//		            	  TextView txtView = (TextView) ((Activity)context).findViewById(R.id.cardResult);
+//		                  txtView.setText("Hello");
+//
+//		            	  TextView welcome = ((TextView) findViewById(R.id.cardResult));
+//		                welcome.setText("Hello " + user.getName() + "!");
+                                    ((PushUpApplication)getApplication()).setCurrentUser(user);
+                                    ((PushUpApplication)getApplication()).setUpGCM();
+                                    System.out.println(user.getName());
+                                }
+                            }
+                        }).executeAsync();
+                    }
+                }
+            };
+            com.facebook.Session.openActiveSession(this, true, facebookCallback);
         }
     }
 
