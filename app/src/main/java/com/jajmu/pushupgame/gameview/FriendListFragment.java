@@ -276,17 +276,19 @@ public class FriendListFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        List<String> tmpList = data.getStringArrayListExtra("opponents");
-        List<GraphUser> list = new ArrayList<GraphUser>();
-        for (String tmpString : tmpList) {
-            try {
-                GraphUser user = GraphObject.Factory.create(new JSONObject(tmpString), GraphUser.class);
-                list.add(user);
-            } catch (JSONException e) {
-                e.printStackTrace();
+        if(resultCode == PickerActivity.RESULT_OK){
+            List<String> tmpList = data.getStringArrayListExtra("opponents");
+            List<GraphUser> list = new ArrayList<GraphUser>();
+            for (String tmpString : tmpList) {
+                try {
+                    GraphUser user = GraphObject.Factory.create(new JSONObject(tmpString), GraphUser.class);
+                    list.add(user);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
+            mListener.onFriendSelect(list);
         }
-        mListener.onFriendSelect(list);
         super.onActivityResult(requestCode, resultCode, data);
         System.out.println(requestCode);
         System.out.println("inside friend list fragment");

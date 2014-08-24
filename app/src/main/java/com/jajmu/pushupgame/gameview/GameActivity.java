@@ -2,8 +2,10 @@ package com.jajmu.pushupgame.gameview;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -14,20 +16,31 @@ import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
+import com.facebook.model.GraphObject;
 import com.facebook.model.GraphUser;
 import com.jajmu.pushupgame.GameStateManager;
 import com.jajmu.pushupgame.PushUpApplication;
 import com.jajmu.pushupgame.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GameActivity extends Activity implements FriendListFragment.OnFragmentInteractionListener, VersusFragment.OnFragmentInteractionListener{
     private static final int REAUTH_ACTIVITY_CODE = 100;
     private static final String GAME_PREFERENCES_FILE = "GameStateManager";
     private GameStateManager gameStateManager;
+    final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            System.out.println("received by game activity");
+            gcmMessageHandler(intent.getExtras());
+            abortBroadcast();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        System.out.println("game created");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
         uiHelper = new UiLifecycleHelper(this, callback);
@@ -37,23 +50,26 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
         // the fragment_container FrameLayout
         if (findViewById(R.id.gameContainer) != null) {
             GameStateManager.GameState gameState = getGameStateManager().getCurrentState();
-            // However, if we're being restored from a previous state,
-            // then we don't need to do anything and should return or else
-            // we could end up with overlapping fragments.
             if (savedInstanceState != null) {
-                return;
-
-//                String type = savedInstanceState.get("type").toString();
-//                String challengerId = savedInstanceState.get("challenger_id").toString();
-//                if(type.equals("challenge")){
-//                    getGameStateManager().setCurrentState(GameStateManager.GameState.BEING_CHALLENGED);
-////                    notificationIntent.putExtra("param1", getCurrentUser().getId());
-////                    notificationIntent.putExtra("param2", challengerId);
-//                } else if(type.equals("finishTurn")){
-//                    getGameStateManager().setCurrentState(GameStateManager.GameState.YOUR_TURN);
-//                } else{
-//                    getGameStateManager().setCurrentState(GameStateManager.GameState.START);
-//                }
+                if(savedInstanceState.containsKey("type")){
+                    System.out.println(savedInstanceState.get("type").toString());
+                    String type = savedInstanceState.get("type").toString();
+                    String challengerId = savedInstanceState.get("challenger_id").toString();
+                    if(type.equals("challenge")){
+                        getGameStateManager().setCurrentState(GameStateManager.GameState.BEING_CHALLENGED);
+//                    notificationIntent.putExtra("param1", getCurrentUser().getId());
+//                    notificationIntent.putExtra("param2", challengerId);
+                    } else if(type.equals("finishTurn")){
+                        getGameStateManager().setCurrentState(GameStateManager.GameState.YOUR_TURN);
+                    } else{
+                        getGameStateManager().setCurrentState(GameStateManager.GameState.START);
+                    }
+                } else {
+                    // if we're being restored from a previous state,
+                    // then we don't need to do anything and should return or else
+                    // we could end up with overlapping fragments.
+                    return;
+                }
             }
             // Create a new Fragment to be placed in the activity layout
             FriendListFragment firstFragment = new FriendListFragment();
@@ -98,6 +114,40 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Handles fragment UI when receiving push notification
+     * @param b
+     */
+    private void gcmMessageHandler(Bundle b){
+        if (b != null) {
+            if(b.containsKey("type")){
+                System.out.println(b.get("type").toString());
+                String type = b.get("type").toString();
+                String challengerId = b.get("challenger_id").toString();
+                if(type.equals("challenge")){
+                    getGameStateManager().setCurrentState(GameStateManager.GameState.BEING_CHALLENGED);
+                    List<GraphUser> opponents = new ArrayList<GraphUser>();
+                    GraphUser u = GraphObject.Factory.create(GraphUser.class);
+                    u.setId(challengerId);
+                    u.setName("Random");
+                    u.setFirstName("first");
+                    u.setLastName("last");
+                    opponents.add(u);
+                    onFriendSelect(opponents);
+                } else if(type.equals("finishTurn")){
+                    getGameStateManager().setCurrentState(GameStateManager.GameState.YOUR_TURN);
+                } else{
+                    getGameStateManager().setCurrentState(GameStateManager.GameState.START);
+                }
+            } else {
+                // if we're being restored from a previous state,
+                // then we don't need to do anything and should return or else
+                // we could end up with overlapping fragments.
+                return;
+            }
+        }
     }
 
     @Override
@@ -182,8 +232,34 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
 
     @Override
     public void onResume() {
+        IntentFilter filter = new IntentFilter("com.jajmu.GOT_PUSH");
+        filter.setPriority(2);
+        registerReceiver(mBroadcastReceiver, filter);
         super.onResume();
         uiHelper.onResume();
+        System.out.println("game resumed");
+        Bundle savedInstanceState = getIntent().getExtras();
+        if (savedInstanceState != null) {
+            if(savedInstanceState.containsKey("type")){
+                System.out.println(savedInstanceState.get("type").toString());
+                String type = savedInstanceState.get("type").toString();
+                String challengerId = savedInstanceState.get("challenger_id").toString();
+                if(type.equals("challenge")){
+                    getGameStateManager().setCurrentState(GameStateManager.GameState.BEING_CHALLENGED);
+//                    notificationIntent.putExtra("param1", getCurrentUser().getId());
+//                    notificationIntent.putExtra("param2", challengerId);
+                } else if(type.equals("finishTurn")){
+                    getGameStateManager().setCurrentState(GameStateManager.GameState.YOUR_TURN);
+                } else{
+                    getGameStateManager().setCurrentState(GameStateManager.GameState.START);
+                }
+            } else {
+                // if we're being restored from a previous state,
+                // then we don't need to do anything and should return or else
+                // we could end up with overlapping fragments.
+                return;
+            }
+        }
     }
 
     @Override
@@ -194,6 +270,7 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
 
     @Override
     public void onPause() {
+        unregisterReceiver(mBroadcastReceiver);
         super.onPause();
         uiHelper.onPause();
     }
@@ -202,6 +279,7 @@ public class GameActivity extends Activity implements FriendListFragment.OnFragm
     public void onDestroy() {
         super.onDestroy();
         uiHelper.onDestroy();
+        System.out.println("game destroyed");
     }
 
     public GameStateManager getGameStateManager() {

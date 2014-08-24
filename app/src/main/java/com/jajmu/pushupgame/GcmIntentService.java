@@ -13,10 +13,6 @@ import com.jajmu.pushupgame.gameview.GameActivity;
 import com.jajmu.pushupgame.gameview.VersusFragment;
 
 public class GcmIntentService extends IntentService {
-    public static final int NOTIFICATION_ID = 1;
-    private NotificationManager mNotificationManager;
-    NotificationCompat.Builder builder;
-
     public GcmIntentService() {
         super("GcmIntentService");
     }
@@ -46,9 +42,11 @@ public class GcmIntentService extends IntentService {
                 System.out.println(extras.toString());
                 //Game Logic
                 //if we are on the correct page with correct opponent, update UI
+                Intent responseIntent = new Intent("com.jajmu.GOT_PUSH");
+                responseIntent.putExtras(extras);
+                sendOrderedBroadcast(responseIntent, null);
                 //otherwise send notification
-                //
-                sendNotification(extras);
+//                sendNotification(extras);
 //    			int duration = Toast.LENGTH_SHORT;
 //				Toast toast = Toast.makeText(getApplicationContext(), extras.toString(), duration);
 //				toast.show();
@@ -58,31 +56,4 @@ public class GcmIntentService extends IntentService {
         GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
 
-    // Put the message into a notification and post it.
-    // This is just one simple example of what you might choose to do with
-    // a GCM message.
-    private void sendNotification(Bundle b) {
-
-        //TODO: check if logged in -- if not, show splash screen and add challenge to games
-        Intent notificationIntent = new Intent(getApplicationContext(), GameActivity.class);
-
-        //find the class to show based on the game state
-        notificationIntent.putExtras(b);
-
-        PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
-
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.ic_launcher)
-                        .setContentTitle(b.get("title").toString())
-                        .setStyle(new NotificationCompat.BigTextStyle()
-                                .bigText(b.get("message").toString()))
-                        .setContentText(b.get("message").toString());
-
-        mBuilder.setContentIntent(contentIntent);
-        mBuilder.setAutoCancel(true);
-        mNotificationManager = (NotificationManager)
-                this.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-    }
 }
