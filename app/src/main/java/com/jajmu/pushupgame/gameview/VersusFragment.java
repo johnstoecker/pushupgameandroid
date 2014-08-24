@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.facebook.widget.ProfilePictureView;
+import com.google.android.gms.games.Game;
+import com.jajmu.pushupgame.GameStateManager;
 import com.jajmu.pushupgame.PushUpApplication;
 import com.jajmu.pushupgame.R;
 
@@ -84,20 +86,28 @@ public class VersusFragment extends Fragment {
         // Find the user's profile picture custom view
         player1ProfilePicture = (ProfilePictureView) view.findViewById(R.id.player1_profile_pic);
         player1ProfilePicture.setCropped(true);
-        player1ProfilePicture.setProfileId(((PushUpApplication)getActivity().getApplication()).getCurrentUser().getId());
+        player1ProfilePicture.setProfileId(((PushUpApplication) getActivity().getApplication()).getCurrentUser().getId());
 
         player2ProfilePicture = (ProfilePictureView) view.findViewById(R.id.player2_profile_pic);
         player2ProfilePicture.setCropped(true);
-        player2ProfilePicture.setProfileId(((GameActivity)getActivity()).getGameStateManager().getPlayer2UserId());
+        player2ProfilePicture.setProfileId(((GameActivity) getActivity()).getGameStateManager().getPlayer2UserId());
 
         ((TextView)view.findViewById(R.id.player1_name)).setText(((PushUpApplication)getActivity().getApplication()).getCurrentUser().getName());
         ((TextView)view.findViewById(R.id.player2_name)).setText(((GameActivity)getActivity()).getGameStateManager().getPlayer2LongName());
+
+        if(((GameActivity)getActivity()).getGameStateManager().getCurrentState() == GameStateManager.GameState.BEING_CHALLENGED){
+            view.findViewById(R.id.versusStartButton).setVisibility(View.VISIBLE);
+            view.findViewById(R.id.loading_panel).setVisibility(View.INVISIBLE);
+        } else{
+            view.findViewById(R.id.versusStartButton).setVisibility(View.INVISIBLE);
+            view.findViewById(R.id.loading_panel).setVisibility(View.VISIBLE);
+        }
         // Find the user's name view
         return view;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
+    public void onVersusStartButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
         }
